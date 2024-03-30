@@ -82,7 +82,7 @@ muscle_annot.duration = muscle_annot.duration + 0.4
 
 #%% add up annotations
 
-raw.set_annotations(bad_head_annot, squid_annot + muscle_annot)
+raw.set_annotations(bad_head_annot + squid_annot + muscle_annot)
 raw.plot()
 
 #%% plot psd

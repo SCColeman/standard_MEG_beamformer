@@ -82,7 +82,6 @@ active_cov = mne.compute_covariance(epochs_filt["1"], tmin=act_min,
 control_cov= mne.compute_covariance(epochs_filt["1"], tmin=con_min, 
                                     tmax=con_max, method="shrunk")
 
-# left pseudo T
 stc_active = mne.beamformer.apply_lcmv_cov(active_cov, filters)
 stc_control = mne.beamformer.apply_lcmv_cov(control_cov, filters)
 pseudoT = (stc_active - stc_control) / (stc_active + stc_control)

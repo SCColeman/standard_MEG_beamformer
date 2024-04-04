@@ -10,6 +10,7 @@ import numpy as np
 import mne
 
 #%% set up paths
+
 root = r"R:\DRS-PSR\Seb\standard_MEG_beamformer\example_data"
 data_path = op.join(root, "data")
 deriv_path = op.join(root, "derivatives")
@@ -19,13 +20,8 @@ data_fname = op.join(data_path, subject + ".ds")
 
 #%% load data
 
-raw = mne.io.read_raw_ctf(data_fname)
+raw = mne.io.read_raw_ctf(data_fname, preload=True)
 print(raw.info)
-
-#%% get events from file annotations 
-
-events = mne.find_events(raw, stim_channel="UPPT001")
-mne.viz.plot_events(events)
 
 #%% third order gradiometer
 
@@ -33,7 +29,7 @@ raw.apply_gradient_compensation(grade=3)
 
 #%% broadband filter
 
-raw.load_data().filter(l_freq=1, h_freq=45)
+raw.filter(l_freq=1, h_freq=45)
 
 #%% get movement parameters and annotate high movement
 
@@ -54,7 +50,7 @@ bad_head_bool = np.sum(bad_head_bool, axis=1) > 0
 
 # create annotation
 hpi_sfreq = head_pos[1,0] - head_pos[0,0]
-bad_head_duration = 5*hpi_sfreq
+bad_head_duration = 5*hpi_sfreq   
 bad_head_onset = head_pos[bad_head_bool,0] - 2*hpi_sfreq
 bad_head_description = "BAD_head"
 bad_head_annot = mne.Annotations(bad_head_onset, bad_head_duration, 
@@ -87,7 +83,7 @@ raw.plot()
 
 #%% plot psd
 
-raw.plot_psd(fmax=45, picks='mag').show()
+raw.copy().plot_psd(fmax=45, picks='meg').show()
 
 #%% remove any bad channels by LEFT CLICKING
 
@@ -96,7 +92,7 @@ raw.plot()
 #%% ICA (LEFT CLICK ON CARDIAC AND BLINKING TIMECOURSES)
 
 ica = mne.preprocessing.ICA(n_components=20)
-ica.fit(raw.copy().pick_types(meg=True))
+ica.fit(raw, reject_by_annotation=True)
 ica.plot_components()
 ica.plot_sources(raw)
 

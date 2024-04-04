@@ -32,6 +32,7 @@ fs_subject = "fsaverage"
 raw = mne.io.read_raw_fif(data_fname)
 fwd = mne.read_forward_solution(fwd_fname)
 events = mne.find_events(raw, stim_channel="UPPT001")
+mne.viz.plot_events(events)
 raw.pick('mag')
 
 #%% epoch based on trigger
@@ -44,7 +45,7 @@ epochs = mne.Epochs(
     event_id,
     tmin,
     tmax,
-    baseline=(-0.4, -0.1),
+    baseline=(-0.4, -0.1),   # ony important with evoked data
     preload=True,
     reject=dict(mag=4e-12),
     reject_by_annotation=True)
@@ -69,7 +70,7 @@ filters = mne.beamformer.make_lcmv(
 #%% get pseudo T
 
 # filter epochs
-fband = [8, 13]   # alpha
+fband = [13, 30]   # alpha
 epochs_filt = epochs.copy().filter(fband[0], fband[1])
 
 # compute active and control covariance of filtered data        
@@ -104,18 +105,14 @@ pseudoT.plot(src=fwd['src'], subject=fs_subject,
 stc_epochs = mne.beamformer.apply_lcmv_epochs(epochs["1"], filters,
                                               return_generator=True)
 # get labels from parcellation
-parc = "HCPMMP1_combined"
-labels = mne.read_labels_from_annot("fsaverage", parc=parc, subjects_dir=subjects_dir)
-labels = labels[2:]   # first few labels are not real
-
-# morph labels to subject (obviously this does nothing while you're already
-# using fsaverage)
-labels = mne.morph_labels(labels, fs_subject, "fsaverage", subjects_dir)
+parc = "aparc"
+labels = mne.read_labels_from_annot(fs_subject, parc=parc, subjects_dir=subjects_dir)
+names = [i.name for i in labels]
 
 # make atlas label from combination of other labels (i.e., make a bigger ROI)
-label_list = [26, 32, 36]
+label_list = [32, 44, 48]
 hemi = "lh"
-label_name = hemi + " somatosensory"   # CHANGE THIS TO MATCH LABEL_LIST!!!!!!
+label_name = hemi + " motor"   # CHANGE THIS TO MATCH LABEL_LIST!!!!!!
 
 # combine vertices and pos from labels
 vertices = []

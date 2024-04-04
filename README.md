@@ -2,6 +2,7 @@
 This pipeline is used to analyse CTF MEG data taken in Nottingham (SPMIC) using MNE-python. Pre-processing, forward modelling, and source reconstruction are separated into three scripts. The below describes each script in a lot of detail to allow for easy usage and adaptation by non-experienced programmers/scientists.
 
 **Important Notes:**
+
 These scripts must be ran section-wise, as some stages require manual input from the user. For a more automated approach, see the equivalent scripts in *mTBI_predict_notts*, which can all be ran without user input and easily adapted to run in shell/bash.
 
 Most MNE methods act in-place, e.g., running `data.do_operation()` will usually perform `do_operation` on `data`, without having to assign to a new variable. If you want to perform a method on an object without changing it, you would instead run `data.copy().do_operation()`, which applies `do_operation` to a copy of `data`, not `data` itself. 
@@ -12,7 +13,7 @@ The goals of pre-processing MEG data (in this case) are as follows:
 2) Annotate periods of data that are corrupted by noise, caused by SQUID sensor "resets" or muscle artefacts
 3) Perform ICA on the data to remove blink and cardiac artefacts
 
-As opposed to other pre-processing procedures, this one is designed to be as general as possible, i.e., avoiding narrowband filtering and epoching, to allow for a lot of flexibility in later analysis steps. In addition, this pre-processing procedure (along with forward modelling and beamforming) is completely automated, requiring no user input beyond the scanning details (which can be inputted quite simply using bash etc).
+As opposed to other pre-processing procedures, this one is designed to be as general as possible, i.e., avoiding narrowband filtering and epoching, to allow for a lot of flexibility in later analysis steps.
 
 #### Setting up Paths and Loading Data
 The `root` path is the path that contains all of the data, both raw and processed, i.e., the *base* of the folder structure.

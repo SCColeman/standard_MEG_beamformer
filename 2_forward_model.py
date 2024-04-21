@@ -31,7 +31,7 @@ print(raw.info)
 subjects_dir = op.join(root, "subjects_dir")
 
 # Name of the subject directory in FS subjects_dir
-fs_subject = "fsaverage"
+fs_subject = "sub-example"
 
 plot_bem_kwargs = dict(
     subject=fs_subject,

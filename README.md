@@ -3,9 +3,22 @@ This pipeline is used to analyse CTF MEG data taken in Nottingham (SPMIC) using 
 
 **Important Notes:**
 
-These scripts must be ran section-wise, as some stages require manual input from the user. For a more automated approach, see the equivalent scripts in *mTBI_predict_notts*, which can all be ran without user input and easily adapted to run in shell/bash.
+These scripts must be ran section-wise, as some stages require manual input from the user. For a more automated approach, see the equivalent scripts in *mTBI_predict_notts*.
 
 Most MNE methods act in-place, e.g., running `data.do_operation()` will usually perform `do_operation` on `data`, without having to assign to a new variable. If you want to perform a method on an object without changing it, you would instead run `data.copy().do_operation()`, which applies `do_operation` to a copy of `data`, not `data` itself. 
+
+## MNE and FreeSurfer Installation
+It is recommended to install MNE via the standalone installers, using the following link: https://mne.tools/stable/install/installers.html#installers.
+
+The standalone installers provide you with a readymade environment, including spyder and jupyter notebooks. This environment also includes most of the signal processing tools that you will ever need to analyse EEG, MEG or fMRI data.
+
+FreeSurfer is more tricky if using windows, as it only runs on linux systems. If using a windows machine, follow the instructions on this page, https://surfer.nmr.mgh.harvard.edu/fswiki/FS7_wsl_ubuntu, to install FreeSurfer via WSL. 
+
+Note that you also will need to install MNE on WSL to run the necessary commands. This can be done using conda or pip, following these instructions: https://mne.tools/stable/install/manual_install.html#manual-install.
+
+Once installed, you will need to follow the instructions at https://mne.tools/stable/auto_tutorials/forward/10_background_freesurfer.html to perform the necessary FreeSurfer and MNE commands.
+
+**These steps can be tricky if new to computing. Often the best way to get this done is to directly consult somebody who has done it before.**
 
 ## Pre-Processing
 The goals of pre-processing MEG data (in this case) are as follows:
@@ -121,7 +134,7 @@ An image of the MRI and MEG sensor array before and after coregistration is show
 ![coreg](readme_figs/coreg.png "Co-Registration, Before and After")
 
 #### Computing a Source Space
-Computing a source space is simple, but requires several choices that can impact your results. In general there are two options: surface source spaces and volume source spaces. Surface source spaces only define source space coordinates on the cortical surface, whereas volume source spaces define source space coordinates in a regular grid across the entire brain. Surface source spaces make it easier to work with *cortical parcellations* in FreeSurfer. Surface source spaces also allow for more accurate dipole modelling in minimum-norm inverse solutions. However, volume source spaces rely less on an accurate brain segmentation. Here, we use surface source spaces to allow for easy integration with parcellations.
+Computing a source space is simple, but requires several choices that can impact your results. In general there are two options: surface source spaces and volume source spaces. Surface source spaces only define source space coordinates on the cortical surface, whereas volume source spaces define source space coordinates in a regular grid across the entire brain. Surface source spaces make it easier to work with *cortical parcellations* in FreeSurfer, although volume source spaces have better coverage in deep brain regions. We use surface source spaces here for better integration with MNE parcellation functionality.
 
 The main parameter we need to choose for a surface source space is `spacing`, which we set as `"oct6"`. This can be switched to `"oct5"` for a sparser (and therefore faster) source space.
 
@@ -171,7 +184,7 @@ Note the eigenvalue decomposition plot on the right, which tells us the *rank* o
 ![covariance](readme_figs/cov.png "The Data Covariance and Rank")
 
 #### Calculating the Beamformer Weights
-Now we have both the forward model (`fwd`) and the data covariance (`cov`), we can quite simply calculate a set of beamformer weights using `mne.beamformer.make_lcmv`. Most of the defaults are perfectly sufficient here, but be conscious of the `reg` parameter, which relates to the *regularisation* applied to the covariance matrix. Regularisation is essentially adding extra uniform variance to the data (lead diagonal of the covariance). This effectively adds uniform noise to the data, and has the consequence of relaxing the edges of the spatial *passband* of the filter. As a rule of thumb, 5% regularisation (`reg=0.05`) works well in most cases and does not damage the data, although 0% regularisation should be used for maximum spatial resolution, if the covariance is not rank-deficient.
+Now we have both the forward model (`fwd`) and the data covariance (`cov`), we can quite simply calculate a set of beamformer weights using `mne.beamformer.make_lcmv`. Most of the defaults are perfectly sufficient here, but be conscious of the `reg` parameter, which relates to the *regularisation* applied to the covariance matrix. Regularisation is essentially adding extra uniform variance to the data (lead diagonal of the covariance), preventing any particularly low eigenvalues from blowing up the inverse, but also reducing spatial resolution. As a rule of thumb, 5% regularisation (`reg=0.05`) works well in most cases and does not damage the data, although 0% regularisation should be used for maximum spatial resolution, if the covariance is not rank-deficient.
 
 #### Activation Maps
 Next we use the beamformer weights to calculate a so-called pseudo-T map, which compared the beamformer projected power during *active* and *control* windows.
@@ -188,6 +201,11 @@ The pseudo-T is then simply calculated by taking the difference of the active an
 
 ![pseudoT](readme_figs/pseudoT.png "Localised Beta Power")
 
+#### Morphing Pseudo-T to FSaverage
+We can also morph the activation map to standard space, using `compute_source_morph` and loading in some standard space objects from `subjects_dir/fsaverage`. I have included an example of a more publication-ready plot here, showing the same pseudo-T from the previous section but morphed onto fsaverage and displayed in a more pleasing way.
+
+![pseudo-T in standard](readme_figs/morphed.png "Standard Space Pseudo-T")
+
 #### Extracting Peak Time-Frequency Response
 This section is somewhat "hacky", as I create several artificial MNE objects so that I can use the functionality of the objects they are mimicking. If you are a beginner with MNE/Python/MEG, it is advisable that you do not attempt to splice any parts of this with your own code, i.e., use it only as it is written in the original script, changing only the superficial components (label indices/names, baseline values, frequency range etc).
 
@@ -202,9 +220,6 @@ Once we have `source_epochs`, it is trivial to get the time-frequency response a
 The peak frequency filtered timecourse can be obtained by applying the `filter`, `apply_hilbert`, `average` and `apply_baseline` methods to `source_epochs`. The numeric data from the resulting `evoked` object, called `peak_timecourse`, can be obtained by applying the `get_data` method.
 
 ![TFS](readme_figs/TFR.png "Time-Frequency Response")
-
-#### Group-Level Analysis
-The last section in the script outlines how to morph pseudo-T maps to standard (fsaverage) space to allow for averaging over multiple subjects. Obviously in this example we use "fsaverage", so this section has no effect, but the code is identical. 
 
 
 

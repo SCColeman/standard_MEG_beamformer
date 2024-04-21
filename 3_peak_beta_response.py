@@ -87,17 +87,41 @@ stc_active = mne.beamformer.apply_lcmv_cov(active_cov, filters)
 stc_control = mne.beamformer.apply_lcmv_cov(control_cov, filters)
 pseudoT = (stc_active - stc_control) / (stc_active + stc_control)
 
-# plot
+# default plot, interactive
 pseudoT.plot(src=fwd['src'], subject=fs_subject,
+            subjects_dir=subjects_dir, hemi="both")
+
+#%% morph pseudoT to fsaverage for group averaging and better plotting
+
+fname_fsaverage_src = op.join(subjects_dir, "fsaverage", "bem", 
+                              "fsaverage-ico-5-src.fif")
+src_to = mne.read_source_spaces(fname_fsaverage_src)
+
+morph = mne.compute_source_morph(
+    pseudoT,
+    subject_from=fs_subject,
+    subject_to="fsaverage",
+    src_to=src_to,
+    subjects_dir=subjects_dir,
+)
+pseudoT_morphed = morph.apply(pseudoT)
+
+# more publication-ready plot
+pseudoT_morphed.plot(src=src_to, subject="fsaverage",
             subjects_dir=subjects_dir,
-            surface="inflated",
-            views=["lat", "med"],
-            size=600,
-            hemi="split",
+            surface="pial",
+            cortex=[0.54, 0.52, 0.505],  # a pleasing neutral
+            background='white',
+            views=["dorsal", "med", "lat"],
+            view_layout="horizontal",
+            size=[1000, 320],
+            hemi="both",
             smoothing_steps=10,
             time_viewer=False,
             show_traces=False,
-            colorbar=True)
+            colorbar=False,
+            )
+
 
 #%% peak timecourse in label
 
@@ -171,32 +195,3 @@ plt.plot(peak_timecourse.times, peak_timecourse.get_data()[0], color="black")
 plt.ylabel("Oscillatory Power (A.U)")
 plt.xlabel("Time (s)")
 plt.title(new_label.name)
-
-#%% morph pseudoT to fsaverage (this allows you to average over subjects)
-
-# obviously this will do nothing if you're already using fsaverage, 
-# but usually fs_subject would be a specific subject FS reconstruction
-fname_fsaverage_src = op.join(subjects_dir, "fsaverage", "bem", 
-                              "fsaverage-ico-5-src.fif")
-src_to = mne.read_source_spaces(fname_fsaverage_src)
-
-morph = mne.compute_source_morph(
-    pseudoT,
-    subject_from=fs_subject,
-    subject_to="fsaverage",
-    src_to=src_to,
-    subjects_dir=subjects_dir,
-)
-pseudoT_morphed = morph.apply(pseudoT)
-
-# plot
-pseudoT_morphed.plot(src=src_to, subject="fsaverage",
-            subjects_dir=subjects_dir,
-            surface="inflated",
-            views=["lat", "med"],
-            size=600,
-            hemi="split",
-            smoothing_steps=10,
-            time_viewer=False,
-            show_traces=False,
-            colorbar=True)

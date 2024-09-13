@@ -147,7 +147,7 @@ Next, a conduction model is calculated using the boundary element method (BEM). 
 Now all components have been loaded or calculated, a forward model can be computed. Ensure that the modality is set correctly (either `meg=True` or `eeg=True`). The forward model object `fwd` contains the lead fields which are used later to calculate an inverse solution.
 
 ## Source Reconstruction
-Here, we reconstruct the sources of activity in the brain using a linearly constrained minimum variance (LCMV) beamformer. This acts as a spatial filter, where the output of the filter is unity at the location of interest, with overall output variance as close to zero as possible. Other source reconstruction methods exist (see *mTBI_predict_notts/min_norm_parcellation*), but LCMV is particularly good at locating precise sources of activity (although it can actually amplify noise when there is very little brain activity!).
+Here, we reconstruct the sources of activity in the brain using a linearly constrained minimum variance (LCMV) beamformer. This acts as a spatial filter, where the output of the filter is unity at the location of interest, with overall output variance as close to zero as possible. Other source reconstruction methods exist (see *mTBI_predict_notts/min_norm_parcellation*), but LCMV is particularly good at locating precise sources of activity.
 
 An LCMV beamformer derives a set *weights* for each location in the source-space, which can be multiplied by the sensor data to reconstruct source activity. The components required for constructing these weights are:
 1) The lead fields, contained in the `fwd` object.
@@ -184,7 +184,7 @@ Note the eigenvalue decomposition plot on the right, which tells us the *rank* o
 ![covariance](readme_figs/cov.png "The Data Covariance and Rank")
 
 #### Calculating the Beamformer Weights
-Now we have both the forward model (`fwd`) and the data covariance (`cov`), we can quite simply calculate a set of beamformer weights using `mne.beamformer.make_lcmv`. Most of the defaults are perfectly sufficient here, but be conscious of the `reg` parameter, which relates to the *regularisation* applied to the covariance matrix. Regularisation is essentially adding extra uniform variance to the data (lead diagonal of the covariance), preventing any particularly low eigenvalues from blowing up the inverse, but also reducing spatial resolution. As a rule of thumb, 5% regularisation (`reg=0.05`) works well in most cases and does not damage the data, although 0% regularisation should be used for maximum spatial resolution, if the covariance is not rank-deficient.
+Now we have both the forward model (`fwd`) and the data covariance (`cov`), we can quite simply calculate a set of beamformer weights using `mne.beamformer.make_lcmv`. Most of the defaults are perfectly sufficient here, but be conscious of the `reg` parameter, which relates to the *regularisation* applied to the covariance matrix. Regularisation is essentially adding extra uniform variance to the data (lead diagonal of the covariance), preventing the beamformer overfitting to noise, but also reducing spatial resolution. As a rule of thumb, 5% regularisation (`reg=0.05`) works well in most cases and does not damage the data.
 
 #### Activation Maps
 Next we use the beamformer weights to calculate a so-called pseudo-T map, which compared the beamformer projected power during *active* and *control* windows.
